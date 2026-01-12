@@ -1,1 +1,5 @@
-# TODO: Add content
+name           = "myapp"
+db_name        = "mydb"
+db_username    = "admin"
+db_password    = "changeme123!"
+certificate_arn = "arn:aws:acm:..."

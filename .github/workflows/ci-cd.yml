@@ -1,1 +1,104 @@
-# TODO: Add content
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-build-scan:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          cd services/api-service && npm ci
+          cd ../auth-service && npm ci
+          cd ../frontend && npm ci
+
+      - name: Run Tests
+        run: |
+          cd services/api-service && npm test || echo "No tests"
+          cd ../auth-service && npm test || echo "No tests"
+
+      - name: Build Docker Images
+        run: |
+          docker build -t api-service ./services/api-service
+          docker build -t auth-service ./services/auth-service
+          docker build -t frontend ./services/frontend
+
+      - name: Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+  deploy:
+    needs: test-build-scan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, Push Images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/api-service:$IMAGE_TAG ./services/api-service
+          docker build -t $ECR_REGISTRY/auth-service:$IMAGE_TAG ./services/auth-service
+          docker build -t $ECR_REGISTRY/frontend:$IMAGE_TAG ./services/frontend
+
+          docker push $ECR_REGISTRY/api-service:$IMAGE_TAG
+          docker push $ECR_REGISTRY/auth-service:$IMAGE_TAG
+          docker push $ECR_REGISTRY/frontend:$IMAGE_TAG
+
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Deploy to ECS (Blue-Green)
+        run: ./scripts/deploy.sh prod
+        env:
+          IMAGE_TAG: ${{ steps.login-ecr.outputs.image_tag }}

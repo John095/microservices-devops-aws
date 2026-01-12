@@ -1,1 +1,56 @@
-# TODO: Add content
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://dbadmin:admin123@db:5432/appdb
+      - JWT_SECRET=local-dev-secret-key
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: ./services/api-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://dbadmin:admin123@db:5432/appdb
+      - AUTH_SERVICE_URL=http://auth:3001
+    depends_on:
+      - db
+      - auth
+
+  frontend:
+    build: ./services/frontend
+    ports:
+      - "3080:3000"
+    depends_on:
+      - api
+      - auth
+
+volumes:
+  postgres_data:
