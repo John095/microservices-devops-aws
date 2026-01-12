@@ -1,230 +1,1038 @@
 # Microservices DevOps Infrastructure on AWS
 
-A complete DevOps infrastructure implementation featuring microservices architecture, containerization with Docker, Infrastructure as Code with Terraform, and automated CI/CD pipelines with GitHub Actions.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Terraform](https://img.shields.io/badge/Terraform-1.0+-purple.svg)](https://www.terraform.io/)
+[![AWS](https://img.shields.io/badge/AWS-Cloud-orange.svg)](https://aws.amazon.com/)
+[![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)](https://www.docker.com/)
 
-## 🏗️ Architecture Overview
+A production-ready microservices infrastructure on AWS, demonstrating enterprise-grade DevOps practices with Infrastructure as Code (Terraform), containerization (Docker), orchestration (ECS), and automated CI/CD pipelines (GitHub Actions).
 
-This project demonstrates enterprise-grade DevOps practices with:
+---
 
-- **Microservices Architecture**: 3 containerized services (API, Auth, Frontend)
-- **AWS Cloud Infrastructure**: VPC, ECS, RDS, ALB, S3, CloudWatch
-- **Infrastructure as Code**: Terraform modules for reproducible infrastructure
-- **CI/CD Pipeline**: Automated testing, building, and deployment with GitHub Actions
-- **Container Orchestration**: Docker and AWS ECS with auto-scaling
-- **High Availability**: Multi-AZ deployment with load balancing
+## 📋 Table of Contents
 
-## 🚀 Features
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Infrastructure Components](#infrastructure-components)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Deployment](#deployment)
+- [Monitoring & Logging](#monitoring--logging)
+- [Security](#security)
+- [Cost Optimization](#cost-optimization)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-- ✅ Multi-tier VPC with public and private subnets
-- ✅ Auto-scaling ECS cluster with Fargate
-- ✅ RDS PostgreSQL with automated backups
-- ✅ Application Load Balancer with health checks
-- ✅ Blue-green deployment strategy
-- ✅ CloudWatch monitoring and alerting
-- ✅ Secrets management with AWS Secrets Manager
-- ✅ S3 for static assets and backups
-- ✅ Security groups and IAM policies
-- ✅ Automated CI/CD with GitHub Actions
+---
 
-## 📋 Prerequisites
+## 🎯 Overview
 
-- AWS Account with appropriate permissions
-- Terraform >= 1.0
-- Docker >= 20.10
-- AWS CLI configured
-- Node.js >= 18 (for services)
-- GitHub account (for CI/CD)
+This project provides a complete, real-world example of deploying a microservices-based application on AWS using modern DevOps practices. It's designed to be a learning resource and a production-ready template for teams looking to implement similar architectures.
+
+### What This Project Demonstrates
+
+- **Microservices Architecture**: Loosely coupled services with independent deployment cycles
+- **Infrastructure as Code**: Fully automated, version-controlled infrastructure with Terraform
+- **Containerization**: Docker-based microservices for consistency across environments
+- **Cloud-Native**: AWS-managed services for scalability, reliability, and reduced operational overhead
+- **CI/CD Automation**: End-to-end automated pipelines from code commit to production deployment
+- **Production Best Practices**: Security, monitoring, high availability, and disaster recovery
+
+---
+
+## 🏗️ Architecture
+
+### High-Level Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          Internet Gateway                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                ┌───────────▼──────────┐
+                │  Application Load    │
+                │      Balancer        │
+                └───────────┬──────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌──────▼──────┐  ┌────────▼────────┐
+│   Frontend     │  │  API Service │  │  Auth Service   │
+│   Service      │  │              │  │                 │
+│   (ECS)        │  │   (ECS)      │  │    (ECS)        │
+└────────────────┘  └──────┬───────┘  └────────┬────────┘
+                           │                   │
+                    ┌──────▼───────────────────▼──────┐
+                    │     RDS PostgreSQL (Multi-AZ)   │
+                    │     Private Subnet              │
+                    └─────────────────────────────────┘
+```
+
+### Network Architecture
+
+- **VPC**: Isolated network with CIDR 10.0.0.0/16
+- **Public Subnets** (2 AZs): Host ALB and NAT Gateways
+- **Private Subnets** (2 AZs): Host ECS tasks and RDS instances
+- **Multi-AZ Deployment**: High availability across availability zones
+- **NAT Gateways**: Secure outbound internet access for private resources
+
+### Service Architecture
+
+#### 1. **Frontend Service**
+
+- React/Vue.js single-page application
+- Serves static assets and client-side routing
+- Communicates with API service via ALB
+
+#### 2. **API Service**
+
+- RESTful API for business logic
+- Handles CRUD operations
+- Communicates with database and auth service
+
+#### 3. **Auth Service**
+
+- JWT-based authentication
+- User management and session handling
+- Centralized authentication for all services
+
+---
+
+## ✨ Features
+
+### Infrastructure
+
+- ✅ **Multi-tier VPC** with public/private subnets across 2 availability zones
+- ✅ **Auto-scaling ECS cluster** with Fargate (serverless containers)
+- ✅ **RDS PostgreSQL** with automated backups and Multi-AZ failover
+- ✅ **Application Load Balancer** with health checks and SSL termination
+- ✅ **S3 buckets** for static assets, logs, and Terraform state
+- ✅ **CloudWatch** for comprehensive monitoring and alerting
+- ✅ **Secrets Manager** for secure credential management
+
+### DevOps & Automation
+
+- ✅ **Terraform modules** for reusable, maintainable infrastructure
+- ✅ **GitHub Actions workflows** for automated CI/CD
+- ✅ **Blue-green deployments** for zero-downtime updates
+- ✅ **Automated rollback** on deployment failures
+- ✅ **Docker multi-stage builds** for optimized images
+- ✅ **Container vulnerability scanning** with Trivy
+
+### Security & Compliance
+
+- ✅ **Private subnets** for application and database layers
+- ✅ **Security groups** with principle of least privilege
+- ✅ **IAM roles** with minimal required permissions
+- ✅ **Encrypted RDS** with AWS KMS
+- ✅ **VPC Flow Logs** for network traffic analysis
+- ✅ **Secrets rotation** policies
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Cloud Provider**: AWS
-- **IaC Tool**: Terraform
-- **Container Runtime**: Docker
-- **Orchestration**: AWS ECS (Fargate)
-- **CI/CD**: GitHub Actions
-- **Database**: PostgreSQL (RDS)
-- **Load Balancer**: Application Load Balancer
-- **Monitoring**: CloudWatch
-- **Languages**: Node.js, Bash
+| Category                   | Technologies                                              |
+| -------------------------- | --------------------------------------------------------- |
+| **Cloud Provider**         | AWS (VPC, ECS, RDS, ALB, S3, CloudWatch, Secrets Manager) |
+| **Infrastructure as Code** | Terraform 1.0+                                            |
+| **Container Platform**     | Docker, AWS ECS (Fargate)                                 |
+| **CI/CD**                  | GitHub Actions                                            |
+| **Database**               | PostgreSQL 14 (AWS RDS)                                   |
+| **Load Balancing**         | Application Load Balancer (ALB)                           |
+| **Monitoring**             | CloudWatch Logs, Metrics, Alarms                          |
+| **Programming Languages**  | Node.js/TypeScript, JavaScript, Shell                     |
+| **Version Control**        | Git, GitHub                                               |
+
+---
 
 ## 📁 Project Structure
 
 ```
 microservices-devops-aws/
-├── terraform/          # Infrastructure as Code
-├── services/          # Microservices source code
-├── .github/workflows/ # CI/CD pipelines
-├── scripts/           # Automation scripts
-└── docs/             # Documentation
+├── .github/
+│   └── workflows/              # CI/CD pipeline definitions
+│       ├── deploy-production.yml
+│       ├── deploy-staging.yml
+│       └── test.yml
+├── terraform/
+│   ├── modules/               # Reusable Terraform modules
+│   │   ├── vpc/              # VPC and networking
+│   │   ├── ecs/              # ECS cluster and services
+│   │   ├── rds/              # RDS database
+│   │   ├── alb/              # Application Load Balancer
+│   │   └── monitoring/       # CloudWatch setup
+│   ├── environments/         # Environment-specific configs
+│   │   ├── production/
+│   │   └── staging/
+│   ├── main.tf               # Root module
+│   ├── variables.tf          # Input variables
+│   ├── outputs.tf            # Output values
+│   └── terraform.tfvars.example
+├── services/
+│   ├── frontend/             # Frontend microservice
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   ├── api/                  # API microservice
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   └── auth/                 # Authentication microservice
+│       ├── src/
+│       ├── Dockerfile
+│       └── package.json
+├── scripts/
+│   ├── deploy.sh            # Deployment automation
+│   ├── push-images.sh       # ECR image push
+│   ├── setup.sh             # Initial setup
+│   └── teardown.sh          # Cleanup script
+├── docs/
+│   ├── architecture.md      # Architecture details
+│   ├── deployment.md        # Deployment guide
+│   └── troubleshooting.md   # Common issues
+├── docker-compose.yml       # Local development setup
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-## 🚦 Quick Start
+---
+
+## 📦 Prerequisites
+
+Before you begin, ensure you have the following installed and configured:
+
+### Required Tools
+
+- **AWS Account** with administrative access
+- **AWS CLI** (v2.x) - [Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- **Terraform** (≥ 1.0) - [Download](https://www.terraform.io/downloads)
+- **Docker** (≥ 20.10) - [Get Docker](https://docs.docker.com/get-docker/)
+- **Docker Compose** (≥ 2.0)
+- **Node.js** (≥ 18) - [Download](https://nodejs.org/)
+- **Git** (≥ 2.30)
+
+### AWS Configuration
+
+```bash
+# Configure AWS credentials
+aws configure
+
+# Verify configuration
+aws sts get-caller-identity
+```
+
+### GitHub Setup
+
+- GitHub account with repository access
+- GitHub Actions enabled
+- Repository secrets configured (see CI/CD section)
+
+---
+
+## 🚀 Getting Started
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/microservices-devops-aws.git
+git clone https://github.com/John095/microservices-devops-aws.git
 cd microservices-devops-aws
 ```
 
-### 2. Configure AWS Credentials
+### 2. Install Dependencies
 
 ```bash
-aws configure
+# Install npm dependencies
+npm install
+
+# Install service dependencies
+cd services/api && npm install
+cd ../auth && npm install
+cd ../frontend && npm install
+cd ../..
 ```
 
-### 3. Set Up Terraform Variables
+### 3. Set Up Terraform Backend
+
+Create an S3 bucket for Terraform state:
+
+```bash
+# Create S3 bucket
+aws s3 mb s3://your-terraform-state-bucket --region us-east-1
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+  --bucket your-terraform-state-bucket \
+  --versioning-configuration Status=Enabled
+
+# Enable encryption
+aws s3api put-bucket-encryption \
+  --bucket your-terraform-state-bucket \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }'
+```
+
+### 4. Configure Terraform Variables
 
 ```bash
 cd terraform
+
+# Copy example variables file
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
+
+# Edit with your values
+nano terraform.tfvars
 ```
 
-### 4. Initialize and Apply Terraform
+**terraform.tfvars** example:
+
+```hcl
+aws_region          = "us-east-1"
+project_name        = "microservices-app"
+environment         = "production"
+vpc_cidr            = "10.0.0.0/16"
+
+# ECS Configuration
+ecs_cluster_name    = "microservices-cluster"
+desired_count       = 2
+cpu                 = 256
+memory              = 512
+
+# RDS Configuration
+db_instance_class   = "db.t3.small"
+db_name             = "appdb"
+db_username         = "admin"
+
+# Domain (optional)
+domain_name         = "example.com"
+```
+
+### 5. Initialize and Apply Terraform
 
 ```bash
+# Initialize Terraform
 terraform init
+
+# Validate configuration
+terraform validate
+
+# Plan infrastructure changes
 terraform plan
+
+# Apply changes (creates infrastructure)
 terraform apply
 ```
 
-### 5. Build and Push Docker Images
+**Expected output:**
+
+```
+Apply complete! Resources: 47 added, 0 changed, 0 destroyed.
+
+Outputs:
+alb_dns_name = "microservices-alb-123456789.us-east-1.elb.amazonaws.com"
+ecr_repositories = {
+  "api" = "123456789.dkr.ecr.us-east-1.amazonaws.com/microservices-api"
+  "auth" = "123456789.dkr.ecr.us-east-1.amazonaws.com/microservices-auth"
+  "frontend" = "123456789.dkr.ecr.us-east-1.amazonaws.com/microservices-frontend"
+}
+rds_endpoint = "microservices-db.xxxxx.us-east-1.rds.amazonaws.com:5432"
+```
+
+### 6. Build and Push Docker Images
 
 ```bash
-# Build all services
-docker-compose build
+# Login to ECR
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  <account-id>.dkr.ecr.us-east-1.amazonaws.com
 
-# Tag and push to ECR (replace with your ECR URLs)
+# Build and push all services
 ./scripts/push-images.sh
 ```
 
-### 6. Deploy Services
+### 7. Initial Deployment
 
 ```bash
+# Deploy all services
 ./scripts/deploy.sh
+
+# Or deploy individually
+./scripts/deploy.sh frontend
+./scripts/deploy.sh api
+./scripts/deploy.sh auth
 ```
+
+### 8. Verify Deployment
+
+```bash
+# Get ALB DNS name
+terraform output alb_dns_name
+
+# Check health endpoint
+curl http://<alb-dns-name>/health
+
+# View ECS services
+aws ecs list-services --cluster microservices-cluster
+
+# Check logs
+aws logs tail /ecs/microservices/api --follow
+```
+
+---
+
+## 🏛️ Infrastructure Components
+
+### VPC & Networking
+
+**Configuration:**
+
+- **CIDR Block**: 10.0.0.0/16 (65,536 IP addresses)
+- **Public Subnets**: 10.0.1.0/24, 10.0.2.0/24 (across 2 AZs)
+- **Private Subnets**: 10.0.10.0/24, 10.0.11.0/24 (across 2 AZs)
+- **Internet Gateway**: For public subnet internet access
+- **NAT Gateways**: 2 (one per AZ) for private subnet outbound access
+- **Route Tables**: Separate for public and private subnets
+
+**Key Features:**
+
+- Multi-AZ deployment for high availability
+- Network ACLs for additional security layer
+- VPC Flow Logs enabled for traffic monitoring
+
+### ECS Cluster (Fargate)
+
+**Configuration:**
+
+- **Launch Type**: Fargate (serverless)
+- **Task CPU**: 256 (.25 vCPU)
+- **Task Memory**: 512 MB
+- **Desired Count**: 2 tasks per service
+- **Auto-scaling**: 2-10 tasks based on CPU/memory utilization
+
+**Services:**
+
+1. **Frontend Service**
+
+   - Port: 3000
+   - Health check: `/health`
+   - Auto-scaling target: 70% CPU
+
+2. **API Service**
+
+   - Port: 5000
+   - Health check: `/api/health`
+   - Auto-scaling target: 70% CPU
+
+3. **Auth Service**
+   - Port: 4000
+   - Health check: `/auth/health`
+   - Auto-scaling target: 70% CPU
+
+**Deployment Configuration:**
+
+- **Strategy**: Rolling update
+- **Maximum Percent**: 200%
+- **Minimum Healthy Percent**: 100%
+- **Circuit Breaker**: Enabled with automatic rollback
+
+### RDS PostgreSQL
+
+**Configuration:**
+
+- **Engine**: PostgreSQL 14.x
+- **Instance Class**: db.t3.small (production), db.t3.micro (staging)
+- **Storage**: 20 GB GP2 SSD (auto-scaling enabled)
+- **Multi-AZ**: Enabled for production
+- **Backup Retention**: 7 days
+- **Encryption**: AES-256 with AWS KMS
+- **Parameter Group**: Custom with optimized settings
+
+**High Availability:**
+
+- Automatic failover to standby instance
+- Automated backups with point-in-time recovery
+- Read replicas (optional, configured separately)
+
+**Security:**
+
+- Deployed in private subnets
+- Security group allows access only from ECS tasks
+- SSL/TLS enforced for connections
+
+### Application Load Balancer
+
+**Configuration:**
+
+- **Type**: Application Load Balancer
+- **Scheme**: Internet-facing
+- **Availability Zones**: 2
+- **Listeners**:
+  - HTTP (80) → Redirect to HTTPS
+  - HTTPS (443) → Forward to target groups
+
+**Target Groups:**
+
+- **Frontend**: Path `/` → Frontend service
+- **API**: Path `/api/*` → API service
+- **Auth**: Path `/auth/*` → Auth service
+
+**Health Checks:**
+
+- **Interval**: 30 seconds
+- **Timeout**: 5 seconds
+- **Healthy threshold**: 2
+- **Unhealthy threshold**: 3
+
+**Features:**
+
+- Sticky sessions (cookie-based)
+- Connection draining (300 seconds)
+- Access logs stored in S3
+- WAF integration (optional)
+
+### CloudWatch Monitoring
+
+**Log Groups:**
+
+- `/ecs/microservices/frontend`
+- `/ecs/microservices/api`
+- `/ecs/microservices/auth`
+- `/aws/rds/microservices-db`
+
+**Metrics:**
+
+- ECS service CPU/memory utilization
+- ALB request count, latency, HTTP responses
+- RDS CPU, storage, connections
+- Custom application metrics
+
+**Alarms:**
+
+- High CPU utilization (>80% for 5 minutes)
+- High memory utilization (>80% for 5 minutes)
+- ALB 5xx errors (>10 in 5 minutes)
+- RDS storage space (<20% free)
+- Failed ECS task launches
+
+### Secrets Manager
+
+**Stored Secrets:**
+
+- Database credentials
+- JWT signing keys
+- API keys for external services
+- Environment-specific configuration
+
+**Rotation:**
+
+- Automated rotation for database passwords (30 days)
+- Audit trail of all secret access
+
+---
 
 ## 🔄 CI/CD Pipeline
 
-The GitHub Actions pipeline automatically:
+### Pipeline Architecture
 
-1. **Lint & Test**: Runs code quality checks and unit tests
-2. **Build**: Creates Docker images for all services
-3. **Security Scan**: Scans for vulnerabilities with Trivy
-4. **Push to ECR**: Uploads images to AWS ECR
-5. **Deploy to ECS**: Updates ECS services with new images
-6. **Health Check**: Verifies deployment success
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Git Push   │───▶│  Run Tests   │───▶│ Build Images │───▶│Deploy to ECS │
+│  to main     │    │   & Lint     │    │ & Push to    │    │   & Verify   │
+└──────────────┘    └──────────────┘    │     ECR      │    └──────────────┘
+                                        └──────────────┘
+```
 
-### Triggering Deployments
+### GitHub Actions Workflows
 
-- **Push to `main`**: Deploys to production
-- **Push to `develop`**: Deploys to staging
-- **Pull Request**: Runs tests and builds only
+#### 1. **Test Workflow** (`.github/workflows/test.yml`)
 
-## 🏗️ Infrastructure Components
+Triggers on: Pull requests, pushes to `develop`
 
-### VPC Configuration
-- CIDR: 10.0.0.0/16
-- Public Subnets: 2 AZs
-- Private Subnets: 2 AZs
-- NAT Gateway for private subnet internet access
+Steps:
 
-### ECS Cluster
-- Fargate launch type
-- Auto-scaling (2-10 tasks)
-- Blue-green deployment
-- Health checks and rollback
+1. Checkout code
+2. Setup Node.js environment
+3. Install dependencies
+4. Run linting (ESLint)
+5. Run unit tests (Jest)
+6. Run integration tests
+7. Generate test coverage report
+8. Upload coverage to Codecov
 
-### RDS Database
-- PostgreSQL 14
-- Multi-AZ deployment
-- Automated backups (7 days retention)
-- Encrypted at rest
+#### 2. **Build & Deploy Workflow** (`.github/workflows/deploy-production.yml`)
 
-### Load Balancer
-- Application Load Balancer
-- HTTPS with ACM certificate
-- Health checks on /health endpoint
-- Sticky sessions enabled
+Triggers on: Pushes to `main` branch
+
+Steps:
+
+1. **Checkout code**
+2. **Configure AWS credentials**
+3. **Login to Amazon ECR**
+4. **Build Docker images**
+   - Multi-stage builds for optimization
+   - Tagging with commit SHA and `latest`
+5. **Security scan** (Trivy)
+   - Scan for vulnerabilities
+   - Fail on high/critical CVEs
+6. **Push images to ECR**
+7. **Update ECS task definitions**
+   - Download current task definition
+   - Update image tags
+   - Register new task definition
+8. **Deploy to ECS**
+   - Update service with new task definition
+   - Wait for service stability
+   - Monitor deployment status
+9. **Health check**
+   - Verify endpoints are responding
+   - Check CloudWatch metrics
+10. **Rollback** (if failure detected)
+    - Revert to previous task definition
+    - Notify team via Slack/email
+
+### GitHub Secrets Configuration
+
+Required secrets in repository settings:
+
+```
+AWS_ACCESS_KEY_ID         # AWS access key for deployments
+AWS_SECRET_ACCESS_KEY     # AWS secret key
+AWS_REGION                # AWS region (e.g., us-east-1)
+SLACK_WEBHOOK_URL         # For deployment notifications (optional)
+```
+
+### Deployment Strategies
+
+**Blue-Green Deployment:**
+
+```yaml
+# In ECS task definition
+deployment_configuration {
+deployment_circuit_breaker {
+enable   = true
+rollback = true
+}
+maximum_percent         = 200
+minimum_healthy_percent = 100
+}
+```
+
+**Canary Deployment** (optional):
+
+- Route 10% of traffic to new version
+- Monitor metrics for 10 minutes
+- Gradually increase to 100% or rollback
+
+---
 
 ## 📊 Monitoring & Logging
 
-- **CloudWatch Logs**: Centralized logging for all services
-- **CloudWatch Metrics**: Custom metrics for application monitoring
-- **CloudWatch Alarms**: Alerts for critical events
-- **X-Ray**: Distributed tracing (optional)
+### CloudWatch Dashboards
 
-## 🔒 Security Best Practices
+**Custom Dashboard** (`microservices-overview`):
 
-- ✅ Private subnets for application and database layers
-- ✅ Security groups with least privilege
-- ✅ IAM roles with minimal permissions
-- ✅ Secrets stored in AWS Secrets Manager
-- ✅ Encrypted RDS with KMS
-- ✅ VPC Flow Logs enabled
-- ✅ Container vulnerability scanning
+- ECS service health (running tasks, CPU, memory)
+- ALB metrics (requests, latency, errors)
+- RDS metrics (connections, CPU, storage)
+- Application-specific metrics
 
-## 🧪 Testing
+### Log Aggregation
+
+**Centralized Logging:**
 
 ```bash
-# Run unit tests
-npm test
+# View logs from all services
+aws logs tail /ecs/microservices --since 1h --follow
 
-# Run integration tests
-npm run test:integration
+# Filter by service
+aws logs tail /ecs/microservices/api --filter-pattern "ERROR" --follow
 
-# Test Docker builds locally
-docker-compose up
+# Export logs to S3 for long-term storage
+aws logs create-export-task \
+  --log-group-name /ecs/microservices/api \
+  --from $(date -d '7 days ago' +%s)000 \
+  --to $(date +%s)000 \
+  --destination s3://your-logs-bucket
 ```
 
-## 📝 Environment Variables
+### Alerting Configuration
 
-Required environment variables for services:
+**Critical Alarms:**
 
-```env
-DATABASE_URL=postgresql://user:pass@host:5432/db
-JWT_SECRET=your-secret-key
-AWS_REGION=us-east-1
-NODE_ENV=production
+1. **Service Down**: No healthy tasks running → PagerDuty
+2. **High Error Rate**: 5xx errors > 5% → Slack + Email
+3. **Database Issues**: Connection failures → PagerDuty
+4. **Cost Anomaly**: Unexpected spending increase → Email
+
+**Warning Alarms:**
+
+1. **High CPU**: > 70% for 10 minutes → Slack
+2. **High Memory**: > 70% for 10 minutes → Slack
+3. **Slow Response**: P95 latency > 500ms → Email
+
+### Performance Monitoring
+
+**Application Performance Monitoring (APM):**
+
+- AWS X-Ray for distributed tracing
+- Custom metrics for business KPIs
+- Real User Monitoring (RUM) for frontend
+
+---
+
+## 🔒 Security
+
+### Network Security
+
+**Security Group Rules:**
+
+```
+ALB Security Group:
+  Inbound:  Allow 80, 443 from 0.0.0.0/0
+  Outbound: Allow all to ECS security group
+
+ECS Security Group:
+  Inbound:  Allow 3000, 4000, 5000 from ALB security group
+  Outbound: Allow 443 to 0.0.0.0/0 (for AWS API calls)
+            Allow 5432 to RDS security group
+
+RDS Security Group:
+  Inbound:  Allow 5432 from ECS security group
+  Outbound: None
 ```
 
-## 💰 Cost Estimation
+### IAM Policies
 
-Approximate monthly AWS costs:
+**ECS Task Execution Role:**
 
-- ECS Fargate: $30-50
-- RDS (db.t3.small): $30-40
-- ALB: $20-25
-- NAT Gateway: $30-35
-- Data Transfer: $10-20
-- **Total**: ~$120-170/month
+- Pull images from ECR
+- Write logs to CloudWatch
+- Read secrets from Secrets Manager
+
+**ECS Task Role:**
+
+- Application-specific permissions
+- Minimal required access to AWS services
+- No root/admin permissions
+
+### Data Encryption
+
+- **In Transit**: TLS 1.2+ for all connections
+- **At Rest**:
+  - RDS: AES-256 with KMS
+  - S3: SSE-S3 or SSE-KMS
+  - EBS: Encrypted volumes
+
+### Compliance
+
+- VPC Flow Logs for audit trail
+- CloudTrail for API activity logging
+- Config Rules for compliance monitoring
+- Regular security scanning with AWS Inspector
+
+---
+
+## 💰 Cost Optimization
+
+### Estimated Monthly Costs (Production)
+
+| Service                   | Configuration                  | Est. Cost           |
+| ------------------------- | ------------------------------ | ------------------- |
+| ECS Fargate               | 6 tasks × 0.25 vCPU, 0.5GB RAM | $25-35              |
+| RDS PostgreSQL            | db.t3.small, Multi-AZ          | $60-70              |
+| Application Load Balancer | 1 ALB                          | $22-25              |
+| NAT Gateway               | 2 gateways                     | $65-75              |
+| Data Transfer             | ~100 GB/month                  | $9-12               |
+| CloudWatch                | Logs + Metrics                 | $5-10               |
+| S3                        | State, logs, backups           | $3-5                |
+| **Total**                 |                                | **~$190-230/month** |
+
+### Cost Reduction Strategies
+
+1. **Use Fargate Spot** (staging): Save up to 70%
+
+   ```hcl
+   capacity_provider_strategy {
+     capacity_provider = "FARGATE_SPOT"
+     weight            = 100
+   }
+   ```
+
+2. **Right-size Resources**: Monitor actual usage and adjust
+
+   ```bash
+   # Check ECS task utilization
+   aws cloudwatch get-metric-statistics \
+     --namespace AWS/ECS \
+     --metric-name CPUUtilization \
+     --dimensions Name=ServiceName,Value=api-service \
+     --start-time $(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%S) \
+     --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+     --period 3600 \
+     --statistics Average
+   ```
+
+3. **Use Reserved Instances** for predictable RDS workloads (up to 40% savings)
+
+4. **Implement Auto-scaling**: Scale down during off-peak hours
+
+5. **Optimize NAT Gateway**: Use VPC Endpoints for AWS services
+
+6. **Log Retention**: Reduce CloudWatch log retention to 7-14 days
+
+7. **Clean up unused resources**:
+
+   ```bash
+   # Find unused EBS volumes
+   aws ec2 describe-volumes --filters Name=status,Values=available
+
+   # Find old ECR images
+   aws ecr describe-images --repository-name api --query 'sort_by(imageDetails, &imagePushedAt)[:-5]'
+   ```
+
+---
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### 1. ECS Tasks Failing to Start
+
+**Symptoms**: Tasks continuously stop and restart
+
+**Solutions**:
+
+```bash
+# Check task stopped reason
+aws ecs describe-tasks --cluster microservices-cluster --tasks <task-id>
+
+# Common causes:
+# - Insufficient memory: Increase memory in task definition
+# - Image pull errors: Verify ECR permissions
+# - Health check failures: Review application logs
+# - Port conflicts: Check port mappings
+```
+
+#### 2. Database Connection Errors
+
+**Symptoms**: Services can't connect to RDS
+
+**Solutions**:
+
+```bash
+# Verify security group rules
+aws ec2 describe-security-groups --group-ids <rds-sg-id>
+
+# Test connectivity from ECS task
+aws ecs execute-command \
+  --cluster microservices-cluster \
+  --task <task-id> \
+  --container api \
+  --command "/bin/sh" \
+  --interactive
+
+# Inside container:
+nc -zv <rds-endpoint> 5432
+```
+
+#### 3. High Latency
+
+**Symptoms**: Slow API responses
+
+**Solutions**:
+
+```bash
+# Check ALB target health
+aws elbv2 describe-target-health --target-group-arn <tg-arn>
+
+# Review CloudWatch metrics
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/ApplicationELB \
+  --metric-name TargetResponseTime \
+  --dimensions Name=LoadBalancer,Value=app/microservices-alb/xxx \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+  --period 300 \
+  --statistics Average,Maximum
+
+# Optimize:
+# - Add database indexes
+# - Implement caching (Redis/ElastiCache)
+# - Scale ECS tasks
+# - Use read replicas for RDS
+```
+
+#### 4. Deployment Failures
+
+**Symptoms**: GitHub Actions deployment fails
+
+**Solutions**:
+
+```bash
+# Check GitHub Actions logs
+# Verify AWS credentials
+aws sts get-caller-identity
+
+# Test ECS deployment locally
+aws ecs update-service \
+  --cluster microservices-cluster \
+  --service api-service \
+  --force-new-deployment
+
+# Rollback if needed
+aws ecs update-service \
+  --cluster microservices-cluster \
+  --service api-service \
+  --task-definition api:123  # previous revision
+```
+
+### Debugging Commands
+
+```bash
+# View ECS service events
+aws ecs describe-services \
+  --cluster microservices-cluster \
+  --services api-service \
+  --query 'services[0].events[:5]'
+
+# Check CloudWatch logs
+aws logs tail /ecs/microservices/api --since 30m --follow
+
+# Describe task definition
+aws ecs describe-task-definition --task-definition api
+
+# List running tasks
+aws ecs list-tasks --cluster microservices-cluster --service-name api-service
+
+# Get task details
+aws ecs describe-tasks --cluster microservices-cluster --tasks <task-id>
+
+# Check ALB health
+aws elbv2 describe-target-health --target-group-arn <tg-arn>
+```
+
+---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+We welcome contributions! Please follow these guidelines:
+
+### How to Contribute
+
+1. **Fork the repository**
+
+   ```bash
+   gh repo fork John095/microservices-devops-aws
+   ```
+
+2. **Create a feature branch**
+
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+3. **Make your changes**
+
+   - Follow existing code style
+   - Add tests for new features
+   - Update documentation
+
+4. **Run tests**
+
+   ```bash
+   npm test
+   terraform fmt -check
+   terraform validate
+   ```
+
+5. **Commit your changes**
+
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+
+   Use [Conventional Commits](https://www.conventionalcommits.org/)
+
+6. **Push to your fork**
+
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+7. **Open a Pull Request**
+   - Describe your changes
+   - Reference any related issues
+   - Wait for review
+
+### Development Setup
+
+```bash
+# Install pre-commit hooks
+npm install husky --save-dev
+npx husky install
+
+# Run locally with Docker Compose
+docker-compose up
+
+# Access services
+# Frontend: http://localhost:3000
+# API: http://localhost:5000
+# Auth: http://localhost:4000
+```
+
+### Code Review Process
+
+1. All PRs require at least one approval
+2. CI/CD checks must pass
+3. No merge conflicts
+4. Documentation updated if needed
+5. Squash and merge to keep history clean
+
+---
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+### MIT License Summary
 
-For issues and questions:
-- Open an issue on GitHub
-- Email: your-email@example.com
+- ✅ Commercial use
+- ✅ Modification
+- ✅ Distribution
+- ✅ Private use
+- ❌ Liability
+- ❌ Warranty
 
-## 🔗 Useful Links
+---
 
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
-- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+## 📞 Support & Contact
 
-## ⭐ Show Your Support
+### Getting Help
 
-Give a ⭐️ if this project helped you!
+- **Documentation**: Check the [docs/](docs/) folder
+- **Issues**: [Open an issue](https://github.com/John095/microservices-devops-aws/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/John095/microservices-devops-aws/discussions)
+- **Email**: support@example.com
+
+### Maintainers
+
+- [@John095](https://github.com/John095) - Project Lead
+
+---
+
+## 🔗 Additional Resources
+
+### AWS Documentation
+
+- [ECS Best Practices](https://docs.aws.amazon.com/AmazonECS/latest
