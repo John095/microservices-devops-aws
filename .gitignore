@@ -1,1 +1,30 @@
-# TODO: Add content
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+dist/
+build/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Terraform — per-environment tfvars are committed (no secrets in them);
+# anything ad-hoc or local stays out
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.auto.tfvars
+*.local.tfvars
+/terraform/terraform.tfvars
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
