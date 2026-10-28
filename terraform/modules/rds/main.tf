@@ -46,7 +46,10 @@ resource "aws_db_instance" "main" {
   # Database
   db_name  = var.db_name
   username = var.db_username
-  password = var.db_password
+
+  # RDS generates the master password and keeps it in Secrets Manager, so it never
+  # appears in tfvars, plan output or Terraform state. Rotates every 7 days by default.
+  manage_master_user_password = true
 
   # Network
   db_subnet_group_name   = aws_db_subnet_group.main.name
@@ -55,8 +58,8 @@ resource "aws_db_instance" "main" {
 
   # Backup
   backup_retention_period = var.backup_retention_period
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
   # Monitoring
   monitoring_interval = 60

@@ -35,16 +35,34 @@ variable "desired_count" {
   default     = 2
 }
 
-variable "database_url" {
-  description = "Database connection URL"
+variable "db_host" {
+  description = "Database hostname"
   type        = string
-  sensitive   = true
 }
 
-variable "jwt_secret" {
-  description = "JWT secret key"
+variable "db_port" {
+  description = "Database port"
+  type        = number
+}
+
+variable "db_name" {
+  description = "Database name"
   type        = string
-  sensitive   = true
+}
+
+variable "db_username" {
+  description = "Database username"
+  type        = string
+}
+
+variable "db_secret_arn" {
+  description = "ARN of the RDS-managed secret holding the database credentials"
+  type        = string
+}
+
+variable "jwt_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the JWT signing key"
+  type        = string
 }
 
 variable "aws_region" {

@@ -102,10 +102,9 @@ environment    = "prod"
 project_name   = "microservices-app"
 vpc_cidr       = "10.0.0.0/16"
 
-# Database credentials
+# Database (no password here: RDS generates it and stores it in Secrets Manager)
 db_name     = "appdb"
 db_username = "admin"
-db_password = "ChangeThisToSecurePassword123!"  # Use a strong password
 
 # ECR image URLs (update after building images)
 api_image      = "123456789.dkr.ecr.us-east-1.amazonaws.com/api-service:latest"

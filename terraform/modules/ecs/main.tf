@@ -80,6 +80,24 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# The execution role (not the task role) resolves `secrets` before the container
+# starts, so it needs read access to exactly these two secrets and nothing else.
+resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
+  name = "${var.cluster_name}-read-app-secrets"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = [var.db_secret_arn, var.jwt_secret_arn]
+      }
+    ]
+  })
+}
+
 # ECS Task Role
 resource "aws_iam_role" "ecs_task_role" {
   name = "${var.cluster_name}-ecs-task-role"
@@ -110,13 +128,13 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn           = aws_iam_role.ecs_task_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name  = "api-service"
       image = "${var.ecr_repository_url}/api-service:${var.image_tag}"
-      
+
       portMappings = [
         {
           containerPort = 3000
@@ -133,14 +151,20 @@ resource "aws_ecs_task_definition" "api" {
           name  = "PORT"
           value = "3000"
         },
-        {
-          name  = "DATABASE_URL"
-          value = var.database_url
-        },
+        # node-postgres reads PG* variables when no connection string is given
+        { name = "PGHOST", value = var.db_host },
+        { name = "PGPORT", value = tostring(var.db_port) },
+        { name = "PGDATABASE", value = var.db_name },
+        { name = "PGUSER", value = var.db_username },
         {
           name  = "AUTH_SERVICE_URL"
           value = "http://auth-service:3001"
         }
+      ]
+
+      # Injected by ECS at task start from Secrets Manager — never in the task definition
+      secrets = [
+        { name = "PGPASSWORD", valueFrom = "${var.db_secret_arn}:password::" }
       ]
 
       logConfiguration = {
@@ -175,13 +199,13 @@ resource "aws_ecs_task_definition" "auth" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn           = aws_iam_role.ecs_task_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name  = "auth-service"
       image = "${var.ecr_repository_url}/auth-service:${var.image_tag}"
-      
+
       portMappings = [
         {
           containerPort = 3001
@@ -198,14 +222,17 @@ resource "aws_ecs_task_definition" "auth" {
           name  = "PORT"
           value = "3001"
         },
-        {
-          name  = "DATABASE_URL"
-          value = var.database_url
-        },
-        {
-          name  = "JWT_SECRET"
-          value = var.jwt_secret
-        }
+        # node-postgres reads PG* variables when no connection string is given
+        { name = "PGHOST", value = var.db_host },
+        { name = "PGPORT", value = tostring(var.db_port) },
+        { name = "PGDATABASE", value = var.db_name },
+        { name = "PGUSER", value = var.db_username }
+      ]
+
+      # Injected by ECS at task start from Secrets Manager — never in the task definition
+      secrets = [
+        { name = "PGPASSWORD", valueFrom = "${var.db_secret_arn}:password::" },
+        { name = "JWT_SECRET", valueFrom = var.jwt_secret_arn }
       ]
 
       logConfiguration = {
@@ -240,13 +267,13 @@ resource "aws_ecs_task_definition" "frontend" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn           = aws_iam_role.ecs_task_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name  = "frontend"
       image = "${var.ecr_repository_url}/frontend:${var.image_tag}"
-      
+
       portMappings = [
         {
           containerPort = 80
@@ -294,12 +321,12 @@ resource "aws_ecs_service" "api" {
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight           = 100
+    weight            = 100
   }
 
   network_configuration {
     security_groups  = [var.security_group_id]
-    subnets         = var.subnet_ids
+    subnets          = var.subnet_ids
     assign_public_ip = false
   }
 
@@ -324,12 +351,12 @@ resource "aws_ecs_service" "auth" {
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight           = 100
+    weight            = 100
   }
 
   network_configuration {
     security_groups  = [var.security_group_id]
-    subnets         = var.subnet_ids
+    subnets          = var.subnet_ids
     assign_public_ip = false
   }
 
@@ -354,12 +381,12 @@ resource "aws_ecs_service" "frontend" {
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight           = 100
+    weight            = 100
   }
 
   network_configuration {
     security_groups  = [var.security_group_id]
-    subnets         = var.subnet_ids
+    subnets          = var.subnet_ids
     assign_public_ip = false
   }
 
