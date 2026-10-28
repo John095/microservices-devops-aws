@@ -9,12 +9,18 @@ const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+// Fail closed: in production a missing secret must stop the service, not fall back
+// to a key that is published in this repo.
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET is required in production');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
 
 // Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://app:secret@localhost:5432/appdb'
-});
+// DATABASE_URL for local docker-compose; on ECS, node-postgres reads PGHOST/PGUSER/PGPASSWORD/...
+const pool = new Pool(
+  process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : {}
+);
 
 // Middleware
 app.use(helmet());

@@ -31,11 +31,6 @@ variable "db_username" {
   type        = string
 }
 
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
-}
 
 variable "db_instance_class" {
   description = "RDS instance class"
@@ -59,11 +54,4 @@ variable "desired_count" {
   description = "Desired number of ECS tasks"
   type        = number
   default     = 2
-}
-
-variable "jwt_secret" {
-  description = "JWT secret key"
-  type        = string
-  sensitive   = true
-  default     = "your-super-secret-jwt-key-change-in-production"
 }

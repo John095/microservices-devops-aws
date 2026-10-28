@@ -527,17 +527,20 @@ aws logs tail /ecs/microservices/api --follow
 
 ### Secrets Manager
 
-**Stored Secrets:**
+No secret is typed, committed, or written into a task definition:
 
-- Database credentials
-- JWT signing keys
-- API keys for external services
-- Environment-specific configuration
+| Secret | Created by | Reaches the container as |
+|---|---|---|
+| RDS master password | RDS itself (`manage_master_user_password = true`) | `PGPASSWORD`, via the task definition's `secrets` (`<arn>:password::`) |
+| JWT signing key | Terraform (`random_password` → `aws_secretsmanager_secret`) | `JWT_SECRET`, via `secrets` |
 
-**Rotation:**
+- The ECS **execution role** has `secretsmanager:GetSecretValue` on exactly those two ARNs; ECS resolves them before the container starts.
+- Non-secret connection details (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`) are plain environment variables; `node-postgres` reads them natively.
+- `auth-service` refuses to start in production without `JWT_SECRET` instead of falling back to a default key.
 
-- Automated rotation for database passwords (30 days)
-- Audit trail of all secret access
+**Rotation caveat:** RDS rotates the managed password every 7 days by default, but ECS injects `secrets` only at task start. Running tasks keep the old password, and new connections fail after a rotation until the tasks restart. Options: trigger `aws ecs update-service --force-new-deployment` from an EventBridge rule on the rotation event, or have the app fetch the secret itself and retry on authentication failure.
+
+**State caveat:** the RDS password never touches Terraform state, but the JWT key from `random_password` does, so the state backend must be private and encrypted.
 
 ---
 
